@@ -331,7 +331,8 @@ def _decode_contiguous_segment(
         for i, obs_idx in enumerate(obs_indices[sub_start : sub_end + 1]):
             cand = cands_by_obs[obs_idx][chosen_cand_indices[i]]
             sub_cands.append(cand)
-            matches.append(Match(obs_idx=obs_idx, arc_id=cand.arc_id, unmatched_reason=None))
+            matches.append(Match(obs_idx=obs_idx, arc_id=cand.arc_id, unmatched_reason=None,
+                                 along_arc_fraction=cand.along_arc_fraction))
 
         # Reconstruct route part arc IDs including intermediate arcs
         route_arc_ids: List[int] = []

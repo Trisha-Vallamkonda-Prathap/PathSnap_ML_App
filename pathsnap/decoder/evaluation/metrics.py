@@ -209,13 +209,16 @@ def compute_route_continuity(
     obs_map = {o.obs_idx: o for o in obs_objs}
 
     pred_by_obs: Dict[int, Optional[int]] = {}
+    fraction_by_obs: Dict[int, Optional[float]] = {}
     for m in matches:
         if isinstance(m, (Match, ClassifierMatch)):
             pred_by_obs[m.obs_idx] = m.arc_id
+            fraction_by_obs[m.obs_idx] = m.along_arc_fraction
         elif isinstance(m, dict):
             pred_by_obs[int(m["obs_idx"])] = (
                 int(m["arc_id"]) if m.get("arc_id") is not None else None
             )
+            fraction_by_obs[int(m["obs_idx"])] = m.get("along_arc_fraction")
 
     eligible_count = 0
     continuous_count = 0
@@ -244,12 +247,14 @@ def compute_route_continuity(
         # Eligible transition interval
         eligible_count += 1
 
-        # Check reachability in road graph (using mid-fraction 0.5 when fraction is not available)
+        # Decoded matches carry their projected fractions; legacy/classifier matches fall back to arc midpoints.
+        prev_fraction = fraction_by_obs.get(prev_obs.obs_idx)
+        curr_fraction = fraction_by_obs.get(curr_obs.obs_idx)
         d_net, _ = graph.get_candidate_distance_and_path(
             from_arc_id=prev_arc,
-            from_frac=0.5,
+            from_frac=prev_fraction if prev_fraction is not None else 0.5,
             to_arc_id=curr_arc,
-            to_frac=0.5,
+            to_frac=curr_fraction if curr_fraction is not None else 0.5,
         )
 
         is_reachable = False

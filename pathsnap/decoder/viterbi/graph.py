@@ -19,7 +19,7 @@ class RoadNetworkGraph:
         nodes: List[Union[RoadNode, Dict]],
         arcs: List[Union[RoadArc, Dict]],
         max_search_distance_m: float = 2000.0,
-        same_arc_reverse_tolerance_m: float = 1e-3,
+        same_arc_reverse_tolerance_m: float = 15.0,
     ) -> None:
         self.max_search_distance_m = max_search_distance_m
         self.same_arc_reverse_tolerance_m = same_arc_reverse_tolerance_m
@@ -77,6 +77,9 @@ class RoadNetworkGraph:
         # Case 1: Same directed arc
         if from_arc_id == to_arc_id:
             frac_diff = to_frac - from_frac
+            backward_distance = -frac_diff * from_arc.length_m
+            if frac_diff < 0 and backward_distance <= self.same_arc_reverse_tolerance_m:
+                return 0.0, []
             # Forward movement or within small tolerance
             if frac_diff >= -1e-6:
                 dist = max(0.0, frac_diff) * from_arc.length_m

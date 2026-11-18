@@ -20,8 +20,8 @@ class DecoderConfig:
             consecutive candidate road segments before giving up and declaring unreachable.
         use_equal_transition_weights: If True, feasible graph transitions are assigned
             equal log-probability (0.0), matching the test fixture requirements.
-        same_arc_reverse_tolerance_m: Small numerical tolerance in metres when checking
-            if movement along the same arc is forward.
+        same_arc_reverse_tolerance_m: Backward projection tolerance in metres treated as
+            stationary GPS jitter on the same directed arc.
     """
 
     gps_gap_threshold_s: float = 30.0
@@ -30,4 +30,4 @@ class DecoderConfig:
     max_speed_mps: float = 45.0
     max_network_search_m: float = 2000.0
     use_equal_transition_weights: bool = False
-    same_arc_reverse_tolerance_m: float = 1e-3
+    same_arc_reverse_tolerance_m: float = 15.0

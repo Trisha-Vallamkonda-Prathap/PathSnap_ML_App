@@ -141,6 +141,7 @@ class ClassifierMatch:
     trip_id: str
     obs_idx: int
     arc_id: Optional[int]
+    along_arc_fraction: Optional[float] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ClassifierMatch":
@@ -148,6 +149,7 @@ class ClassifierMatch:
             trip_id=str(data["trip_id"]),
             obs_idx=int(data["obs_idx"]),
             arc_id=int(data["arc_id"]) if data.get("arc_id") is not None else None,
+            along_arc_fraction=(float(data["along_arc_fraction"]) if data.get("along_arc_fraction") is not None else None),
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -189,6 +191,7 @@ class Match:
     obs_idx: int
     arc_id: Optional[int]
     unmatched_reason: Optional[Literal["no_candidates", "invalid_transition"]] = None
+    along_arc_fraction: Optional[float] = None
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Match":
@@ -196,6 +199,7 @@ class Match:
             obs_idx=int(data["obs_idx"]),
             arc_id=int(data["arc_id"]) if data.get("arc_id") is not None else None,
             unmatched_reason=data.get("unmatched_reason"),
+            along_arc_fraction=(float(data["along_arc_fraction"]) if data.get("along_arc_fraction") is not None else None),
         )
 
     def to_dict(self) -> Dict[str, Any]:

@@ -1,0 +1,18 @@
+{
+  "num_trips": 10,
+  "total_observations": 19160,
+  "total_aligned_observations": 15979,
+  "aggregate_baseline_accuracy": 0.8342824957757056,
+  "aggregate_viterbi_accuracy": 0.7681957569309719,
+  "accuracy_delta": -0.0660867388447337,
+  "mean_baseline_macro_f1": 0.9268255304562659,
+  "mean_viterbi_macro_f1": 0.9032233649674616,
+  "macro_f1_delta": -0.02360216548880434,
+  "total_eligible_transitions": 19148,
+  "aggregate_baseline_continuity": 0.7647796114476708,
+  "aggregate_viterbi_continuity": 0.9171715061625235,
+  "continuity_delta": 0.1523918947148527,
+  "mean_candidate_miss_rate": 0.0001375515818431912,
+  "mean_normalized_edit_distance": 0.3379726790776709,
+  "total_runtime_seconds": 54.463433027267456
+}

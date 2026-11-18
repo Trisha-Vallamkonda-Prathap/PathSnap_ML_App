@@ -17,7 +17,7 @@ API_URL = os.environ.get("PATHSNAP_API_URL", "http://127.0.0.1:8000").rstrip("/"
 
 # Every key /predict is allowed to return. Anything else (e.g. reference arcs) is a failure.
 ALLOWED_KEYS = {"trip_id", "status", "route_geometry", "counts", "metrics",
-                "route_continuity", "gps_points", "matches", "inference_ms"}
+                "route_continuity", "classifier_only_metrics", "gps_points", "matches", "inference_ms"}
 ALLOWED_MATCH_KEYS = {"obs_idx", "arc_id", "unmatched_reason"}
 
 failures = []

@@ -10,6 +10,7 @@ It never sees the ground-truth route.
 """
 import dataclasses
 from functools import lru_cache
+from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -39,8 +40,13 @@ def load_scorer() -> CandidateScorer:
     return CandidateScorer.load(MODEL_PATH)
 
 
-def predict_trip(trip: Trip) -> DecodedTrip:
-    """Return Member 3's DecodedTrip: one match per GPS point plus the connected route parts."""
+def predict_trip(trip: Trip) -> Tuple[DecodedTrip, Dict[int, Optional[int]]]:
+    """Return (decoded, classifier_only).
+
+    decoded: Member 3's DecodedTrip, one match per GPS point plus the connected route parts.
+    classifier_only: obs_idx -> the model's Top-1 arc before HMM decoding (None if no candidates),
+    kept so the server can report "classifier only vs classifier + HMM" for the same trip.
+    """
     # 1. Candidate road arcs for every GPS point (Member 1).
     candidates = generate_candidates(trip, CANDIDATE_CONFIG)
     trip_record = trip.to_record()  # the shared v1 trip format the decoder expects
@@ -49,11 +55,14 @@ def predict_trip(trip: Trip) -> DecodedTrip:
     #    Output: each candidate gets an emission probability (they sum to 1 per GPS point).
     candidate_table = pd.DataFrame([dataclasses.asdict(c) for c in candidates])
     observation_table = pd.DataFrame(trip_record["observations"]).assign(trip_id=trip.trip_id)
+    classifier_only: Dict[int, Optional[int]] = {i: None for i in range(len(trip.track))}
     if candidate_table.empty:
         scored_rows = []  # no road near any point: the decoder returns an all-unmatched trip
     else:
-        scored, _greedy_matches = load_scorer().score(candidate_table, observation_table)
+        scored, greedy_matches = load_scorer().score(candidate_table, observation_table)
         scored_rows = scored.to_dict("records")
+        for row in greedy_matches.itertuples():
+            classifier_only[int(row.obs_idx)] = None if pd.isna(row.arc_id) else int(row.arc_id)
 
     # 3. HMM + Viterbi decoding over the whole trip (Member 3).
-    return decode_trip(trip_record, scored_rows, DECODER_CONFIG)
+    return decode_trip(trip_record, scored_rows, DECODER_CONFIG), classifier_only

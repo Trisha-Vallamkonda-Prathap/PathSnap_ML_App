@@ -86,7 +86,7 @@ def predict(body: PredictRequest, request: Request):
     # 3. Run the pipeline: candidates -> model scores -> HMM/Viterbi. Never sees ground truth.
     start = time.perf_counter()
     try:
-        decoded = predict_trip(trip)
+        decoded, classifier_only = predict_trip(trip)
     except ModelNotAvailable as err:
         raise HTTPException(status_code=500, detail=str(err))
     inference_ms = (time.perf_counter() - start) * 1000
@@ -99,7 +99,10 @@ def predict(body: PredictRequest, request: Request):
 
     # 5. Score AFTER predicting, on the server. Only aggregate counts come back.
     try:
-        metrics = ground_truth.score_trip(trip, folder, decoded)
+        decoded_arcs = {m.obs_idx: m.arc_id for m in decoded.matches}
+        metrics = ground_truth.score_trip(trip, folder, decoded_arcs)
+        # Same scoring for the model's Top-1 picks before HMM decoding (for the comparison).
+        classifier_metrics = ground_truth.score_trip(trip, folder, classifier_only)
     except (OSError, ValueError) as err:
         raise HTTPException(status_code=500, detail=f"Scoring failed for trip {trip_id}: {err}")
 
@@ -116,8 +119,10 @@ def predict(body: PredictRequest, request: Request):
                 if metrics else "n/a")
     cont_text = (f"{continuity['value']:.1%} ({continuity['connected']}/{continuity['transitions']})"
                  if continuity["value"] is not None else "n/a")
-    log.info("     predict %s | %d points | matched %d | breaks %d | accuracy %s | continuity %s | inference %.0f ms",
-             trip_id, len(points), matched, breaks, acc_text, cont_text, inference_ms)
+    clf_text = (f"{classifier_metrics['accuracy']:.1%}" if classifier_metrics else "n/a")
+    log.info("     predict %s | %d points | matched %d | breaks %d | accuracy %s (classifier only %s) "
+             "| continuity %s | inference %.0f ms",
+             trip_id, len(points), matched, breaks, acc_text, clf_text, cont_text, inference_ms)
 
     return {
         # --- shared API-to-UI contract (handoffs/04) ---
@@ -128,6 +133,7 @@ def predict(body: PredictRequest, request: Request):
         "metrics": metrics,
         # --- extras for the UI ---
         "route_continuity": continuity,
+        "classifier_only_metrics": classifier_metrics,  # model Top-1 before HMM, aggregate only
         "gps_points": points[:, :2].tolist(),  # [[lon, lat], ...] observed input, not ground truth
         "matches": [{"obs_idx": m.obs_idx, "arc_id": m.arc_id, "unmatched_reason": m.unmatched_reason}
                     for m in decoded.matches],

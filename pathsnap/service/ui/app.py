@@ -111,6 +111,10 @@ def show_metrics(result):
         col1.metric("Pointwise accuracy", f"{metrics['accuracy']:.1%}")
         col1.caption(f"{metrics['correct']} correct of {metrics['aligned']} aligned GPS points"
                      + (f" · macro F1 {metrics['macro_f1']:.3f}" if metrics.get("macro_f1") is not None else ""))
+        clf = result.get("classifier_only_metrics")
+        if clf:
+            col1.caption(f"Classifier only (before HMM): {clf['accuracy']:.1%} "
+                         f"({clf['correct']}/{clf['aligned']})")
     else:
         col1.metric("Pointwise accuracy", "n/a")
         col1.caption("No reference available for this trip")

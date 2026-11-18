@@ -14,14 +14,13 @@ from typing import Dict, Optional
 
 from pathsnap.data.loading import Trip
 from pathsnap.data.reference_alignment.scoring import score_trip as member1_score_trip
-from pathsnap.decoder import DecodedTrip
 
 
-def score_trip(trip: Trip, folder: Path, decoded: DecodedTrip) -> Optional[Dict]:
-    """Aggregate scores for one prediction, or None when the trip has no usable reference."""
+def score_trip(trip: Trip, folder: Path, predictions: Dict[int, Optional[int]]) -> Optional[Dict]:
+    """Aggregate scores for one prediction (obs_idx -> arc_id or None),
+    or None when the trip has no usable reference."""
     if not (folder / f"{trip.trip_id}.route").is_file():
         return None  # e.g. a trip without a .route file: nothing to score against
-    predictions = {m.obs_idx: m.arc_id for m in decoded.matches}  # obs_idx -> arc_id or None
     result = member1_score_trip(trip, folder, predictions)
     if not result["aligned"]:
         return None
